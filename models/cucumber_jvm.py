@@ -125,6 +125,9 @@ class CucumberReportSummary(RootModel):
 
 def summarize_element(element: Element) -> ElementSummary:
     failing_step =  next((step for step in element.steps if step.result.status != "passed"), None)
+    if failing_step is not None and failing_step.result.error_message:
+        failing_step.result.error_message = failing_step.result.error_message.split("\n")[:1]
+        failing_step.match = None
     return ElementSummary(
         line = element.line,
         type = element.type,
@@ -152,9 +155,7 @@ def summarize_feature(feature: Feature, only_errors=False) -> FeatureSummary:
         elements=[summarize_element(e) for e in feature.elements]
     )
     if only_errors:
-        print(len(summary.elements))
         summary.elements = [e for e in summary.elements if e.failing_step is not None]
-        print(len(summary.elements))        
     return summary
 
 def summarize_cucumber_report(report: CucumberReport, only_errors=False) -> CucumberReportSummary:
