@@ -126,7 +126,7 @@ class CucumberReportSummary(RootModel):
 def summarize_element(element: Element) -> ElementSummary:
     failing_step =  next((step for step in element.steps if step.result.status != "passed"), None)
     if failing_step is not None and failing_step.result.error_message:
-        failing_step.result.error_message = failing_step.result.error_message.split("\n")[:1]
+        failing_step.result.error_message = failing_step.result.error_message.split("\n")[0]
         failing_step.match = None
     return ElementSummary(
         line = element.line,
