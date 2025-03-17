@@ -94,7 +94,7 @@ class CucumberReport(RootModel):
 
 # == Non Standard
 class ElementSummary(BaseModel):
-    # line: int
+    line: int
     type: Literal["background", "scenario"]
     # keyword: str
     name: str
@@ -126,6 +126,7 @@ class CucumberReportSummary(RootModel):
 def summarize_element(element: Element) -> ElementSummary:
     failing_step =  next((step for step in element.steps if step.result.status != "passed"), None)
     return ElementSummary(
+        line = element.line,
         type = element.type,
         name = element.name,
         description = element.description,

@@ -6,9 +6,14 @@ from openai import OpenAI
 from pydantic import BaseModel
 from models.cucumber_jvm import CucumberReport,summarize_cucumber_report
 from io import StringIO
+from collections import defaultdict
 
 MODEL, INPUT_COST, OUTPUT_COST = "o3-mini", 1.1, 4.4
-
+st.set_page_config(
+    # page_title=title,
+    # page_icon="⚗️",
+    layout="wide"
+)
 def evaluate_size(object: BaseModel) -> int:
     return len(object.model_dump().__str__()) 
 
@@ -22,7 +27,7 @@ def evaluate_token_size(input, model_name=MODEL):
     return len(tokens)
 
 uploaded_file = st.file_uploader(
-    "Upload a document (.txt or .md)", type=("json")
+    "Upload a document (.json). Up to now, only cucumber-jvm cucumber.json are allowed.", type=("json")
 )
 if not uploaded_file:
     st.stop()
@@ -30,19 +35,25 @@ if not uploaded_file:
 stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
 string_data = stringio.read()
 
-st.write("filename:", uploaded_file.name)
+# st.write("filename:", uploaded_file.name)
 data = json.loads(string_data)
 st.write(f"Nombre de features: {len(data)}")
 
 report = CucumberReport.model_validate(data)
-st.write(f"{evaluate_size(report)=:,} chars")
+# st.write(f"{evaluate_size(report)=:,} chars")
 
 summary = summarize_cucumber_report(report, only_errors = True)
 st.write(f"Features en échec: {len(summary.root)}")
-st.write(f"{evaluate_size(summary)=:,} chars")
-st.write(f"{evaluate_token_size(summary)} token")
+# st.write(f"{evaluate_size(summary)=:,} chars")
+# st.write(f"{evaluate_token_size(summary)} token")
 
+steps = defaultdict(list)
+for feature in summary.root:
+    for element in feature.elements:
+        steps[element.failing_step.name] = f"{feature.name} \n\n {element.tags} \n\n {element.name}"
 
+st.subheader("Liste des étapes en échec")
+st.dataframe(sorted(steps))
 st.divider()
 
 # summary = CucumberReportSummary(summary.root[:20])
@@ -64,6 +75,7 @@ else:
     # )
 
     # Ask the user for a question via `st.text_area`.
+    st.info("Le modèle ne disposera que des infos suivantes: features et scénarios en échec - ligne en échec - erreur. Les pièces jointes, logs et étapes réussies ne sont pas disponibles")
     question = st.text_area(
         "Now ask a question about the document!",
         value = "Regroupe les scénarios par étapes en échec, analyse les erreurs les plus fréquentes et renvoie un rapport de test résumé comprenant le nombre exact d'erreurs,  la liste des étapes le plus souvent en erreur, la liste des erreurs les plus fréquentes et des recommandations de priorisation de résolution. Réponds de manière précise et consice.",
