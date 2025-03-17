@@ -4,16 +4,19 @@ import json
 import tiktoken
 from openai import OpenAI
 from pydantic import BaseModel
-from models.cucumber_jvm import CucumberReport,CucumberReportSummary, summarize_element, summarize_cucumber_report
+from models.cucumber_jvm import CucumberReport,summarize_cucumber_report
 from io import StringIO
+
+MODEL, INPUT_COST, OUTPUT_COST = "o3-mini", 1.1, 4.4
+
 def evaluate_size(object: BaseModel) -> int:
     return len(object.model_dump().__str__()) 
 
-def compute_openai_cost(usage, input_cost=0.15, output_cost = 0.6) :
+def compute_openai_cost(usage, input_cost=INPUT_COST, output_cost = OUTPUT_COST) :
     return usage.prompt_tokens * input_cost / 1_000_000 + usage.completion_tokens * output_cost / 1_000_000
 st.title("Cucumber Report Analyzer")
 
-def evaluate_token_size(input, model_name="o3-mini"):
+def evaluate_token_size(input, model_name=MODEL):
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(str(input))
     return len(tokens)
@@ -63,7 +66,7 @@ else:
     # Ask the user for a question via `st.text_area`.
     question = st.text_area(
         "Now ask a question about the document!",
-        value = "Regroupe les scénarios par étapes en échec, analyse les erreurs les plus fréquentes et renvoie un rapport de test résumé permettant à l'équipe de développement d'avoir un statut complet sur l'état du système et les problèmes à résoudre en priorité ",
+        value = "Regroupe les scénarios par étapes en échec, analyse les erreurs les plus fréquentes et renvoie un rapport de test résumé comprenant le nombre exact d'erreurs,  la liste des étapes le plus souvent en erreur, la liste des erreurs les plus fréquentes et des recommandations de priorisation de résolution. Réponds de manière précise et consice.",
         disabled=not summary,
     )
 
@@ -80,8 +83,8 @@ else:
         ]
 
         input_token = evaluate_token_size(messages)
-        st.write(f"Le coût d'entrée estimé est de {input_token} tokens, soit {input_token*1.1/1_000_000:.4f} USD")
-        st.write(f"Le coût de sortie moyen est de 3000 tokens, soit {3000*4.4/1_000_000:.4f} USD")
+        st.write(f"Le coût d'entrée estimé est de {input_token} tokens, soit {input_token*INPUT_COST/1_000_000:.4f} USD")
+        st.write(f"Le coût de sortie moyen est de 3000 tokens, soit {3000*OUTPUT_COST/1_000_000:.4f} USD")
 
         # Generate an answer using the OpenAI API.
         # stream = client.chat.completions.create(
@@ -95,14 +98,14 @@ else:
             with st.spinner(show_time=True):
                 response = client.chat.completions.create(
                     # model="gpt-4o-mini",
-                    model="o3-mini",
+                    model=MODEL,
                     messages=messages,
                     stream=False,
                 )
 
                 st.write(response.choices[0].message.content)
                 st.write(response.usage)
-                st.write(f"Cost: {compute_openai_cost(response.usage, 1.1, 4.4):.4f} USD")
+                st.write(f"Cost: {compute_openai_cost(response.usage):.4f} USD")
 
 
 
