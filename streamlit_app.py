@@ -78,7 +78,7 @@ else:
     st.info("Le modèle ne disposera que des infos suivantes: features et scénarios en échec - ligne en échec - erreur. Les pièces jointes, logs et étapes réussies ne sont pas disponibles")
     question = st.text_area(
         "Now ask a question about the document!",
-        value = "Regroupe les scénarios par étapes en échec, analyse les erreurs les plus fréquentes et renvoie un rapport de test résumé comprenant le nombre exact d'erreurs,  la liste des étapes le plus souvent en erreur, la liste des erreurs les plus fréquentes et des recommandations de priorisation de résolution. Réponds de manière précise et concice.",
+        value = "Regroupe les scénarios par étapes en échec, analyse les erreurs les plus fréquentes et renvoie un rapport de test résumé comprenant le nombre exact d'erreurs,  la liste des étapes le plus souvent en erreur, la liste des erreurs les plus fréquentes et des recommandations de priorisation de résolution. Réponds de manière précise et concise.",
         disabled=not summary,
     )
 
